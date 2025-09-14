@@ -62,7 +62,6 @@ object ItemUtil {
         val meta = item.itemMeta ?: return out
         val plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
 
-        // Name / lore
         runCatching { if (meta.hasDisplayName()) meta.displayName() else null }
             .getOrNull()
             ?.let { out["name"] = plain.serialize(it) }
@@ -71,21 +70,17 @@ object ItemUtil {
             .getOrNull()
             ?.let { lore -> out["lore"] = lore.map { plain.serialize(it) } }
 
-        // Custom model data
         runCatching { if (meta.hasCustomModelData()) meta.customModelData else null }
             .getOrNull()
             ?.let { out["customModelData"] = it }
 
-        // Unbreakable
         runCatching { meta.isUnbreakable }.getOrNull()?.let { if (it) out["unbreakable"] = true }
 
-        // Flags
         runCatching { meta.itemFlags }
             .getOrNull()
             ?.takeIf { it.isNotEmpty() }
             ?.let { out["flags"] = it.map { f -> f.name } }
 
-        // Enchantments
         runCatching { if (meta.hasEnchants()) meta.enchants else emptyMap() }
             .getOrNull()
             ?.takeIf { it.isNotEmpty() }
