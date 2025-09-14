@@ -53,22 +53,48 @@ object ItemUtil {
 
     fun toPayload(item: ItemStack?): Map<String, Any>? {
         if (item == null || item.type.isAir) return null
+
         val out = mutableMapOf<String, Any>(
             "material" to item.type.name,
             "amount" to item.amount
         )
+
         val meta = item.itemMeta ?: return out
         val plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-        meta.displayName()?.let { out["name"] = plain.serialize(it) }
-        meta.lore()?.let { out["lore"] = it.map { c -> plain.serialize(c) } }
-        meta.customModelData?.let { out["customModelData"] = it }
-        if (meta.isUnbreakable) out["unbreakable"] = true
-        if (meta.itemFlags.isNotEmpty()) out["flags"] = meta.itemFlags.map { it.name }
-        if (meta.hasEnchants()) {
-            out["enchantments"] = meta.enchants.map { (ench, lvl) ->
-                mapOf("type" to ench.key.key.uppercase(), "level" to lvl)
+
+        // Name / lore
+        runCatching { if (meta.hasDisplayName()) meta.displayName() else null }
+            .getOrNull()
+            ?.let { out["name"] = plain.serialize(it) }
+
+        runCatching { if (meta.hasLore()) meta.lore() else null }
+            .getOrNull()
+            ?.let { lore -> out["lore"] = lore.map { plain.serialize(it) } }
+
+        // Custom model data
+        runCatching { if (meta.hasCustomModelData()) meta.customModelData else null }
+            .getOrNull()
+            ?.let { out["customModelData"] = it }
+
+        // Unbreakable
+        runCatching { meta.isUnbreakable }.getOrNull()?.let { if (it) out["unbreakable"] = true }
+
+        // Flags
+        runCatching { meta.itemFlags }
+            .getOrNull()
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { out["flags"] = it.map { f -> f.name } }
+
+        // Enchantments
+        runCatching { if (meta.hasEnchants()) meta.enchants else emptyMap() }
+            .getOrNull()
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { ench ->
+                out["enchantments"] = ench.map { (e, lvl) ->
+                    mapOf("type" to e.key.key.uppercase(), "level" to lvl)
+                }
             }
-        }
+
         return out
     }
 }
