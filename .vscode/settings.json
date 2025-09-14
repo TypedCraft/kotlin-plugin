@@ -1,0 +1,11 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.gradle.enabled": false,
+  "java.import.maven.enabled": true,
+  "java.completion.importOrder": ["java", "javax", "com", "org", "net"],
+  "java.errors.incompleteClasspath.severity": "ignore",
+  "java.configuration.maven.userSettings": "C:\\Users\\ethan\\.m2\\settings.xml",
+  "kotlin.languageServer.enabled": true,
+  "kotlin.languageServer.path": "kotlin-language-server",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -javaagent:\"${env:HOME}\\.vscode\\extensions\\gabrielbb.vscode-lombok-1.0.2\\server\\lombok.jar\""
+}

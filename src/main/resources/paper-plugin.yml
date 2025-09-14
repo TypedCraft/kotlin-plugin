@@ -1,0 +1,4 @@
+name: TypeCraft
+version: '1.0-SNAPSHOT'
+main: net.ethanburkett.TypeCraft
+api-version: '1.21'

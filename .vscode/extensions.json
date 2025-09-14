@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "fwcd.kotlin",
+    "vscjava.vscode-java-pack",
+    "mathiasfrohlich.Kotlin",
+    "fwcd.kotlin-debug-adapter",
+    "vscjava.vscode-gradle",
+    "gabrielbb.vscode-lombok"
+  ]
+}
