@@ -99,6 +99,66 @@ class GuiOps(private val plugin: JavaPlugin, private val rpc: RpcServer) : OpMod
                 mapOf("ok" to true)
             }, respond, error)
 
+            "Gui.close" -> runMain(plugin, {
+                val playerUuid = payload["uuid"]?.asString ?: return@runMain error("BAD_REQUEST", "missing uuid")
+                val idStr = payload["menuInstanceId"]?.asString
+                    ?: return@runMain error("BAD_REQUEST", "missing menuInstanceId")
+
+                val targetId = runCatching { UUID.fromString(idStr) }.getOrNull()
+                    ?: return@runMain error("BAD_REQUEST", "invalid menuInstanceId")
+
+                val player = plugin.server.getPlayer(UUID.fromString(playerUuid))
+                    ?: return@runMain error("NOT_ONLINE", "player not online")
+
+                val top = player.openInventory?.topInventory
+                    ?: return@runMain error("NOT_FOUND", "player has no open inventory")
+                val holder = top.holder as? MenuHolder
+                    ?: return@runMain error("NOT_FOUND", "player is not viewing a TypeCraft menu")
+
+                if (holder.id != targetId) {
+                    return@runMain error("MISMATCH", "different menu is open for player")
+                }
+
+                rpc.emit(
+                    "Gui.Close",
+                    mapOf("menuInstanceId" to holder.id.toString(), "uuid" to player.uniqueId.toString())
+                )
+
+                // Close for that player
+                player.closeInventory()
+                mapOf("ok" to true)
+            }, respond, error)
+
+            "Gui.get" -> runMain(plugin, {
+                val idStr = payload["menuInstanceId"]?.asString
+                    ?: return@runMain error("BAD_REQUEST", "missing menuInstanceId")
+                val targetId = runCatching { UUID.fromString(idStr) }.getOrNull()
+                    ?: return@runMain error("BAD_REQUEST", "invalid menuInstanceId")
+
+                val inv = plugin.server.onlinePlayers
+                    .asSequence()
+                    .mapNotNull { it.openInventory?.topInventory }
+                    .firstOrNull { (it.holder as? MenuHolder)?.id == targetId }
+                    ?: return@runMain error("NOT_FOUND", "menu not open")
+
+                val viewers = inv.viewers.mapNotNull { it as? Player }
+                    .map { mapOf("name" to it.name, "uuid" to it.uniqueId.toString()) }
+
+                val slots = (0 until inv.size).mapNotNull { slot ->
+                    val item = inv.getItem(slot)
+                    val json = ItemUtil.toPayload(item)
+                    json?.let { mapOf("slot" to slot, "item" to it) }
+                }
+
+                mapOf(
+                    "menuInstanceId" to targetId.toString(),
+                    "size" to inv.size,
+                    "viewers" to viewers,
+                    "slots" to slots,
+                    "ok" to true
+                )
+            }, respond, error)
+
             else -> error("UNKNOWN", kind)
         }
     }
