@@ -77,7 +77,52 @@ class PlayerOps(private val plugin: JavaPlugin) : OpModule {
                 )
                 p.inventory.addItem(item)
                 mapOf("ok" to true)
-            }, respond) { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) }
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
+            "Player.heal" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val amount = payload.get("amount")?.asDouble ?: 20.0
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                p.heal(amount)
+
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
+            "Player.setFoodLevel" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val amount = payload.get("amount")?.asInt ?: 20
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                p.foodLevel = amount
+
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
+            "Player.setFlying" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                val bool = payload.get("value")?.asBoolean ?: !p.isFlying
+
+                p.isFlying = bool
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
+            "Player.setOp" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                val bool = payload.get("value")?.asBoolean ?: !p.isOp
+
+                p.isOp = bool
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
+            "Player.setInvulnerable" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                val bool = payload.get("value")?.asBoolean ?: !p.isInvulnerable
+
+                p.isInvulnerable = bool
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
 
             else -> error("UNKNOWN", kind)
         }
@@ -131,5 +176,6 @@ private fun playerSnapshot(p: Player): MutableMap<String, Any?> = mutableMapOf(
     "level" to p.level,
     "totalExperience" to p.totalExperience,
     "ping" to p.ping,
-    "walkSpeed" to p.walkSpeed
+    "walkSpeed" to p.walkSpeed,
+    "foodLevel" to p.foodLevel,
 )
