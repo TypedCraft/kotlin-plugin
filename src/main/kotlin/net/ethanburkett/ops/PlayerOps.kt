@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import net.ethanburkett.bridge.OpModule
 import net.ethanburkett.core.ItemUtil
 import net.ethanburkett.core.Threading.runMain
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
@@ -12,6 +13,7 @@ import java.util.*
 
 class PlayerOps(private val plugin: JavaPlugin) : OpModule {
     override fun handles(kind: String) = kind.startsWith("Player.")
+    val mm = MiniMessage.miniMessage()
 
     override fun handle(kind: String, payload: JsonObject, respond: (Any) -> Unit, error: (String, String) -> Unit) {
         fun badRequest(msg: String) = error("BAD_REQUEST", msg)
@@ -64,7 +66,7 @@ class PlayerOps(private val plugin: JavaPlugin) : OpModule {
                 val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
                 val text = requireString(payload, "text")
                 val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
-                p.sendMessage(text)
+                p.sendMessage(mm.deserialize(text))
                 mapOf("ok" to true)
             }, respond) { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) }
 
@@ -124,6 +126,15 @@ class PlayerOps(private val plugin: JavaPlugin) : OpModule {
                 mapOf("ok" to true)
             }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
 
+            "Player.setAllowFlight" -> runMain(plugin, {
+                val uuid = parseUuidOrThrow(requireAnyString(payload, "uuid", "playerUuid"))
+                val p = plugin.server.getPlayer(uuid) ?: throw IllegalStateException("Player not online")
+                val bool = payload.get("value")?.asBoolean ?: !p.allowFlight
+
+                p.allowFlight = bool
+                mapOf("ok" to true)
+            }, respond, { code, msg -> if (code == "EX") badRequest(msg) else error(code, msg) })
+
             else -> error("UNKNOWN", kind)
         }
     }
@@ -178,4 +189,6 @@ private fun playerSnapshot(p: Player): MutableMap<String, Any?> = mutableMapOf(
     "ping" to p.ping,
     "walkSpeed" to p.walkSpeed,
     "foodLevel" to p.foodLevel,
+    "isFlying" to p.isFlying,
+    "isBanned" to p.isBanned
 )
